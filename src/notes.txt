@@ -1,0 +1,259 @@
+
+IMPORTANT NOTES: 
+1) THAT STARTING NEED TO BE THAT  ---- REACT_APP 
+2) THAT FILE NEED TO BE CREATE IN A PACKAGE.JSON FILE AND THAT PROJECT NAME RIGHT CLICK THEN CREATE THAT FILE NAME ---- .env
+
+ REACT_APP_BASE_URL="https://jsonplaceholder.typicode.com"  keep this in this .env file
+ 3)  THEN RUN  ---- npm start  dont forget 
+
+4) THEN CREATE A FOLDER IN src LIKE apis AND IN THAT CREATE A FILES 
+
+      1) Config.js
+    
+const BASE_URL="https://jsonplaceholder.typicode.com/posts";
+
+export default BASE_URL;
+
+First keep this in one file and then export that and use in your fetch .
+
+
+Here for form validation we can do in this way 
+
+
+  /*  here it is form validation to validate the form */
+  // const handleee=()=>{
+
+  //   let errorss={}
+  //   if(!texting.trim()){
+  //     errorss="Name is not undefined"
+  //   }
+
+  //   if(!email.includes("@")){
+  //     errorss="Email is incorrect"
+  //   }
+
+  //   const clear=Object.key(errorss).length===0
+  //       setError(clear)
+  // }
+
+  Here i am passing the state name are name in input field based on that 
+  we can passs that value to that particular usestate and also we can 
+  pass the index also here example
+
+  onChange={(e) =>
+                              handlerEditChange("title", e.target.value)
+                            }
+
+here that file it will show the entered value in this way also we can do 
+empty that field and also edit that field and save there 
+
+                             const handlerEditChange = (field, value) => {
+    setEditItem((prev) => (prev ? { ...prev, [field]: value } : prev));
+  };
+
+      <Button onClick={() => handlerEdit(index)}>Edit</Button>
+
+
+
+
+
+// HERE THIS IS MY TODO LIST CODE FROM THIS WE CAN CREATE A API FOR OFFICE WORKS LIKE UI
+
+import React, { createContext, useEffect, useState } from "react";
+import  api from "../apis/baseURL";
+import {endPoints} from "../apis/endPoints";
+
+export const CreateContext = createContext();
+
+function DataFetch({ children }) {
+  const [store, setStore] = useState([]);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [editIndex, setEditIndex] = useState(null);
+  const [editItem, setEditItem] = useState({
+    title: "",
+    body: "",
+  });
+  useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+    const dataFetch = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const response = await api.get(
+
+            /*  THIS LINE LOGICS I AM USING AT BEFORE
+        //   `${BASE_URL}?q=${search}&_page=${page}&_limit=${6}`,
+        //   { signal }
+        */
+
+        endPoints.getPosts, {
+            params: { q: search, _page: page, _limit: 6 },
+            signal,
+          }
+        );
+
+        /* this is for fetch isteams  so no need of this lines
+        // if (!response.ok) {
+        //   throw new Error("404 server is not respond");
+        // }
+                const data = await response.json();
+        */
+
+                //this is axios no need to await here like fetch
+                const data = response.data;
+
+        const result = data.sort((x, y) => x.id - y.id);
+        setStore(result);
+      } catch (error) {
+        /*here if not coming from signal error means then that normal 
+        u need  to see that server error  for fetch it is */
+        // if (error.name !== "AbortError") {
+        //   setError(error.message);
+        // }
+
+        // this is axios we will use
+        if (error.name === "CanceledError") console.log("Request canceled");
+      else if (error.response) setError(`Server Error: ${error.response.status}`);
+      else if (error.request) setError("No response from server");
+      else setError(error.message);
+      } finally {
+        /*  here that fetching came then we need to stop 
+        showing the loading ui message */
+        setLoading(false);
+      }
+    };
+
+    dataFetch();
+
+    return () => controller.abort();
+  }, [search, page]);
+
+  const handlerEdit = (indexOf) => {
+    const items = store[indexOf];
+    setEditItem({
+      title: items.title,
+      body: items.body,
+    });
+    setEditIndex(indexOf);
+
+    // setSearch(store[indexOf])// this is for normal todolist
+    // setEditIndex(indexOf)
+  };
+
+  const handlerEditChange = (field, value) => {
+    setEditItem((prev) => (prev ? { ...prev, [field]: value } : prev));
+  };
+
+  const Save = () => {
+    if (editIndex !== null) {
+      const updatedStore = [...store];
+      updatedStore[editIndex] = {
+        ...updatedStore[editIndex],
+        title: editItem.title,
+        body: editItem.body,
+      };
+      setStore(updatedStore);
+      setEditIndex(null);
+      setEditItem({ title: "", body: "" });
+    }
+  };
+
+  const handlerSearch = (e) => {
+    setSearch(e.target.value);
+  };
+
+  const handlerNext = () => {
+    setPage((prev) => prev + 1);
+  };
+
+  const handlerPrev = () => {
+    setPage((prev) => (prev > 1 ? prev - 1 : 1));
+  };
+
+  const handlerDelete = (indexOf) => {
+    const filtering = store.filter((item, index) => index !== indexOf);
+
+    /* here we are trying to keep the confirm modal for pop message
+        before deleting the data to confirm wether to delete are not */
+    const result = window.confirm("Confirm before clicking the button !!");
+    if (result) {
+      setStore(filtering);
+    }
+    return;
+  };
+  return (
+   
+        <CreateContext.Provider
+          value={{
+            search,
+            error,
+            store,
+            handlerSearch,
+            handlerPrev,
+            handlerNext,
+            handlerDelete,
+            loading,
+            handlerEdit,
+            Save,
+            handlerEditChange,
+            editItem,
+            editIndex,
+          }}
+        >
+          {children}
+        </CreateContext.Provider>
+    
+  );
+}
+
+export default DataFetch;
+
+
+
+ /*
+
+             ADD FORM INPUTS  THIS WILL USE FOR ADDING LIKE POSTING SOME DATA IN AN ARRAY 
+             IF WE CLICK ADD BUTTON AND THAT POST LOGIC WE CAN GIVE FOR THIS CODE 
+
+      const [newTitle, setNewTitle] = useState("");
+      const [newBody, setNewBody] = useState("");
+
+        <TextField
+        label="Title"
+        value={newTitle}
+        onChange={(e) => setNewTitle(e.target.value)}
+      />
+
+      <TextField
+        label="Body"
+        value={newBody}
+        onChange={(e) => setNewBody(e.target.value)}
+      />
+
+      <Button
+        variant="contained"
+        onClick={() =>
+          handlerAdd({ title: newTitle, body: newBody })
+        }
+      >
+        Add
+      </Button>
+
+      */
+    
+   
+      
+
+// configur file
+
+
+const BASE_URL="https://jsonplaceholder.typicode.com/posts";
+
+export default BASE_URL;
+
+
+

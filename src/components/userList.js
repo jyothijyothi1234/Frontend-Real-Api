@@ -1,6 +1,6 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import Grid from "@mui/material/Grid";
-import { CreateContext } from "../context/DataFetch";
+import { CreateContext } from  "../pages/dataFetching";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Table from "@mui/material/Table";
@@ -10,6 +10,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
+import Box from "@mui/material/Box"; 
 
 function UserList() {
   const {
@@ -26,23 +27,13 @@ function UserList() {
     handlerEditChange,
     editItem,
     editIndex,
+    handlerAdd
   } = useContext(CreateContext);
 
-  /*  here it is form validation to validate the form */
-  // const handleee=()=>{
+  /* here that fields will show when there it send the index
+      to that usestate then that will show  in 114 line where if true means 
+      show the input fields   */
 
-  //   let errorss={}
-  //   if(!texting.trim()){
-  //     errorss="Name is not undefined"
-  //   }
-
-  //   if(!email.includes("@")){
-  //     errorss="Email is incorrect"
-  //   }
-
-  //   const clear=Object.key(errorss).length===0
-  //       setError(clear)
-  // }
 
   return (
     <Grid container sx={{ margin: "20px 20px" }}>
@@ -50,31 +41,34 @@ function UserList() {
         size={{ xs: 12 }}
         sx={{ margin: "20px 20px", display: "flex", justifyContent: "center" }}
       >
-        {/* <form> */}
+
+<Box display="flex" gap={2}>
         <TextField
-          sx={{ width: "30%" }}
+          sx={{ width: "400px" }}
           name="texting"
           value={search}
           onChange={handlerSearch}
         />
-        <Button onClick={handlerNext}>Next</Button>
 
-        <Button onClick={handlerPrev}>Previous</Button>
-        <Button onClick={Save}>Save</Button>
 
-        {/* </form> */}
+   <Button    variant="contained" onClick={handlerNext}>Next</Button>
+
+        <Button  variant="contained" onClick={handlerPrev}>Previous</Button>
+        {/* <Button onClick={Save}>Save</Button> */}
+
+        </Box>
       </Grid>
 
       <Grid size={{ xs: 12 }} sx={{ border: "2px solid black" }}>
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
-              <TableRow>
-                <TableCell sx={{ border: "2px solid black" }}>userId</TableCell>
-                <TableCell sx={{ border: "2px solid black" }}>Id</TableCell>
-                <TableCell sx={{ border: "2px solid black" }}>Title</TableCell>
-                <TableCell sx={{ border: "2px solid black" }}>Body</TableCell>
-                <TableCell sx={{ border: "2px solid black" }}>Filter</TableCell>
+              <TableRow  >
+                <TableCell sx={{ border: "2px solid black",textAlign:"center",fontWeight:"bold",fontSize:"25px" }}>userId</TableCell>
+                <TableCell sx={{ border: "2px solid black",textAlign:"center",fontWeight:"bold",fontSize:"25px" }}>Id</TableCell>
+                <TableCell sx={{ border: "2px solid black",textAlign:"center",fontWeight:"bold",fontSize:"25px" }}>Title</TableCell>
+                <TableCell sx={{ border: "2px solid black",textAlign:"center",fontWeight:"bold",fontSize:"25px" }}>Body</TableCell>
+                <TableCell sx={{ border: "2px solid black",textAlign:"center",fontWeight:"bold",fontSize:"25px" }}>Filter</TableCell>
               </TableRow>
             </TableHead>
 
@@ -82,10 +76,10 @@ function UserList() {
               {store.map((item, index) => (
                 <TableRow key={index}>
                   <TableCell sx={{ border: "2px solid black" }}>
-                    {item.id}
+                    {item.userId}
                   </TableCell>
                   <TableCell sx={{ border: "2px solid black" }}>
-                    {item.userId}
+                    {item.id}
                   </TableCell>
                   <TableCell sx={{ border: "2px solid black" }}>
                     {item.title}
@@ -95,45 +89,42 @@ function UserList() {
                   </TableCell>
                   <TableCell sx={{ border: "2px solid black" }}>
                     <Button onClick={() => handlerDelete(index)}>Delete</Button>
-                    <Button onClick={() => handlerEdit(index)}>Edit</Button>
-
-                    <Grid
-                      size={{ xs: 12 }}
-                      sx={{
-                        margin: "20px 20px",
-                        display: "flex",
-                        justifyContent: "center",
-                      }}
-                    >
-                      /* here that fields will show when there it send the index
-                      to that usestate then that will show */
-                      {editIndex === index && (
-                        <>
-                          <TextField
-                            name="title"
-                            value={editItem.title}
-                            onChange={(e) =>
-                              handlerEditChange("title", e.target.value)
-                            }
-                          ></TextField>
-                          <TextField
-                            name="body"
-                            value={editItem.body}
-                            onChange={(e) =>
-                              handlerEditChange("body", e.target.value)
-                            }
-                          >
-                            Edit
-                          </TextField>
-                        </>
-                      )}
-                    </Grid>
+                    {/* <Button onClick={() => handlerEdit(index)}>{editIndex===null?"edit":"save"}</Button> */}
+                    <Button
+  onClick={() =>
+    editIndex === index ? Save() : handlerEdit(index)
+  }
+>
+  {editIndex === index ? "Save" : "Edit"}
+</Button>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </TableContainer>
+
+
+                      {editIndex !== null && (
+                        
+                        <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+                          <TextField
+                            name="title"
+                            value={editItem.title}
+                            onChange={(e) =>
+                              handlerEditChange("title", e.target.value)
+                            }
+                          />
+                          <TextField
+                            name="body"
+                            value={editItem.body}
+                            onChange={(e) =>
+                              handlerEditChange("body", e.target.value)
+                            } />
+                           
+                           </Box>
+                      )}
+                   
         {loading && <h1>Loading!!!...</h1>}
         {error && <h1 style={{ color: "red" }}>{error}</h1>}
       </Grid>
