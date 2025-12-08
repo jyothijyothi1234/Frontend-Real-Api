@@ -4,19 +4,40 @@ import { endPoints } from "../apis/endPoints";
 
 export const CreateContext = createContext();
 
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+};
+
 function DataFetch({ children }) {
   const [store, setStore] = useState([]);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [editIndex, setEditIndex] = useState(null);
+
+  const [editId, setEditId] = useState(null);
   const [editItem, setEditItem] = useState({ title: "", body: "" });
+
+  const [open, setOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+
+  const handleOpen = (id) => {
+    setDeleteId(id);
+    setOpen(true);
+  };
+  const handleClose = () => setOpen(false);
 
   // -------------------- GET ALL POSTS --------------------
   useEffect(() => {
     const controller = new AbortController();
-    const signal = controller.signal;
 
     const fetchPosts = async () => {
       setLoading(true);
@@ -24,13 +45,11 @@ function DataFetch({ children }) {
       try {
         const response = await api.get(endPoints.getPosts, {
           params: { q: search, _page: page, _limit: 6 },
-          signal,
+          signal: controller.signal,
         });
-        setStore(response.data.sort((a, b) => a.id - b.id));
+        setStore(response.data.sort((x, y) => x.id - y.id));
       } catch (error) {
-        if (error.name === "CanceledError") console.log("Request canceled");
-        else if (error.response) setError(`Server Error: ${error.response.status}`);
-        else if (error.request) setError("No response from server");
+        if (error.response) setError(`Server Error: ${error.response.status}`);
         else setError(error.message);
       } finally {
         setLoading(false);
@@ -41,142 +60,141 @@ function DataFetch({ children }) {
     return () => controller.abort();
   }, [search, page]);
 
-  // -------------------- GET SINGLE POST BY ID --------------------
+  // -------------------- FETCH SINGLE POST --------------------
   const fetchSinglePost = async (id) => {
     try {
       const response = await api.get(endPoints.getPostById(id));
-      return response.data; // return single post data
-    } catch (error) {
-      console.log("Error fetching single post:", error);
+      return response.data;
+    } catch {
       return null;
     }
   };
 
-  // -------------------- EDIT / SELECT ITEM --------------------
-  const handlerEdit = async (indexOf) => {
-    const post = store[indexOf];
 
-    // Fetch latest data from server by ID
-    const singleData = await fetchSinglePost(post.id);
-    if (singleData) setEditItem({ title: singleData.title, body: singleData.body });
 
-    setEditIndex(indexOf);
+
+  // // -------------------- UPDATE / PUT (Full update on server) -------------------- // 
+  //const Save = async () => { 
+    // if (editIndex === null) return; 
+    // const updatedItem = { 
+      // ...store[editIndex], 
+    // keep id, userId, etc. 
+    // title: editItem.title,
+     // overwrite title 
+     // body: editItem.body, 
+     // overwrite body 
+     // }; 
+     // try { 
+      // // ---- PUT: Full update ---- 
+      // await api.put(endPoints.updatePost(updatedItem.id), updatedItem); 
+      // // update UI also 
+      // const updatedStore = [...store]; 
+      // updatedStore[editIndex] = updatedItem; 
+      // setStore(updatedStore); 
+      // // reset state 
+      // setEditIndex(null); 
+      // setEditItem({ title: "", body: "" }); 
+      // } catch (error) { 
+        // if (error.response) 
+          //setError(Server Error: ${error.response.status}); 
+        // else if (error.request) 
+          //setError("No response from server"); 
+        // else setError(error.message); 
+        // } 
+        // };
+
+  // -------------------- EDIT --------------------
+  const handlerEdit = async (id) => {
+    const singleData = await fetchSinglePost(id);
+
+    if (singleData) {
+      setEditItem({ title: singleData.title, body: singleData.body });
+      setEditId(id);
+    }
   };
 
   const handlerEditChange = (field, value) => {
     setEditItem((prev) => ({ ...prev, [field]: value }));
   };
 
-  // -------------------- UPDATE / PUT OR PATCH --------------------
   const Save = async () => {
-    if (editIndex === null) return;
+    if (!editId) return;
 
-    const updatedItem = {
-      ...store[editIndex],
-      title: editItem.title,
-      body: editItem.body,
-    };
+    const updatedItem = { ...editItem };
 
     try {
-      // Use PATCH to update partially, or PUT for full update
-      await api.patch(endPoints.updatePost(updatedItem.id), updatedItem);
+      await api.patch(endPoints.updatePost(editId), updatedItem);
 
-      const updatedStore = [...store];
-      updatedStore[editIndex] = updatedItem;
-      setStore(updatedStore);
+      setStore((prev) =>
+        prev.map((item) =>
+          item.id === editId ? { ...item, ...updatedItem } : item
+        )
+      );
 
-      setEditIndex(null);
+      setEditId(null);
       setEditItem({ title: "", body: "" });
     } catch (error) {
-      if (error.response) setError(`Server Error: ${error.response.status}`);
-      else if (error.request) setError("No response from server");
-      else setError(error.message);
+      setError("Error updating");
     }
   };
 
 
 
-
-//   // -------------------- UPDATE / PUT (Full update on server) --------------------
-// const Save = async () => {
-//   if (editIndex === null) return;
-
-//   const updatedItem = {
-//     ...store[editIndex],   // keep id, userId, etc.
-//     title: editItem.title, // overwrite title
-//     body: editItem.body,   // overwrite body
-//   };
-
-//   try {
-//     // ---- PUT: Full update ----
-//     await api.put(endPoints.updatePost(updatedItem.id), updatedItem);
-
-//     // update UI also
-//     const updatedStore = [...store];
-//     updatedStore[editIndex] = updatedItem;
-//     setStore(updatedStore);
-
-//     // reset state
-//     setEditIndex(null);
-//     setEditItem({ title: "", body: "" });
-//   } catch (error) {
-//     if (error.response) setError(`Server Error: ${error.response.status}`);
-//     else if (error.request) setError("No response from server");
-//     else setError(error.message);
-//   }
-// };
 
   // -------------------- DELETE --------------------
-  const handlerDelete = async (indexOf) => {
-    const itemToDelete = store[indexOf];
-    const result = window.confirm("Confirm before deleting!");
-    if (!result) return;
+  const handlerDelete = async () => {
+
+    //------------- this type for js we will use for confirm that button-------------- 
+    // const result = window.confirm("Confirm before deleting!"); 
+    // if (!result) return
+
 
     try {
-      await api.delete(endPoints.deletePost(itemToDelete.id));
-      setStore(store.filter((_, idx) => idx !== indexOf));
+      await api.delete(endPoints.deletePost(deleteId));
+
+      setStore((prev) => prev.filter((item) => item.id !== deleteId));
+
+      setOpen(false);
+      setDeleteId(null);
     } catch (error) {
-      if (error.response) setError(`Server Error: ${error.response.status}`);
-      else if (error.request) setError("No response from server");
-      else setError(error.message);
+      setError("Error deleting");
     }
   };
 
-  // -------------------- POST / ADD NEW --------------------
+  // -------------------- ADD POST --------------------
   const handlerAdd = async (newItem) => {
     try {
       const response = await api.post(endPoints.createPost, newItem);
       setStore([response.data, ...store]);
     } catch (error) {
-      if (error.response) setError(`Server Error: ${error.response.status}`);
-      else if (error.request) setError("No response from server");
-      else setError(error.message);
+      setError("Error adding");
     }
   };
-
-  // -------------------- SEARCH & PAGINATION --------------------
-  const handlerSearch = (e) => setSearch(e.target.value);
-  const handlerNext = () => setPage((prev) => prev + 1);
-  const handlerPrev = () => setPage((prev) => (prev > 1 ? prev - 1 : 1));
 
   return (
     <CreateContext.Provider
       value={{
         search,
-        error,
         store,
-        handlerSearch,
-        handlerPrev,
-        handlerNext,
-        handlerDelete,
-        handlerAdd,
         loading,
+        error,
+        handlerSearch: (e) => setSearch(e.target.value),
+        handlerNext: () => setPage((prev) => prev + 1),
+        handlerPrev: () => setPage((prev) => (prev > 1 ? prev - 1 : 1)),
+
         handlerEdit,
-        Save,
         handlerEditChange,
+        Save,
         editItem,
-        editIndex,
-        handlerAdd
+        editId,
+
+        handlerAdd,
+
+        open,
+        handleOpen,
+        handleClose,
+        handlerDelete,
+        style,
       }}
     >
       {children}
