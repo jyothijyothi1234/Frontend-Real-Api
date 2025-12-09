@@ -41,11 +41,11 @@ function UserList() {
   /* here that fields will show when there it send the index to that usestate then that will show in 114 line where if true means show the input fields */
 
   // ---------------- NORMAL JS LOGIC TO DELETE ---------
-  {
+  
     /* <Button onClick={() => handlerDelete(item.id)}>Delete</Button>
    ------------- TO EDIT BUTTON AND SAVE 2ND METHOD ---------- 
    {/* <Button onClick={() => handlerEdit(item.id)}>{editIndex===null?"edit":"save"}</Button> */
-  }
+  
 
   return (
     <Grid container sx={{ margin: "30px" }}>
