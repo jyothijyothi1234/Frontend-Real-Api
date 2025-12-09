@@ -223,7 +223,7 @@ function UserList() {
 
           <Typography variant="h6">Confirm before deleting?</Typography>
 
-          <Button variant="contained" onClick={handlerDelete}  style={{margin:"20px"}}>
+          <Button variant="contained" onClick={handlerDelete}  sx={{margin:"20px"}}>
             Ok
           </Button>
           <Button variant="contained" onClick={handleClose}>
